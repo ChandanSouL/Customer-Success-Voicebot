@@ -5,5 +5,7 @@ scipy
 soundfile
 numpy
 audio_resorder_streamlit
-streamlit 
-git+https://github.com/huggingface/parler-tts.git
+streamlit
+accelerate 
+torchaudio
+localtunnel
