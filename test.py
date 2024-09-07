@@ -1,27 +1,46 @@
 import streamlit as st
 from audio_recorder_streamlit import audio_recorder
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer, WhisperForConditionalGeneration
+import torch
 import soundfile as sf
-import numpy as np
-from huggingface_hub import hf_hub_download
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from parler_tts import ParlerTTSForConditionalGeneration
+from transformers import WhisperProcessor
+
 # Set up HuggingFace models
 def setup_models():
+    # Check if GPU is available
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
     # Load Whisper model for speech-to-text
-    transcriber = pipeline(model="openai/whisper-tiny.en", task="automatic-speech-recognition")
+    transcriber = WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny.en").to(device)
     
     # Load TinyLlama for text generation
-    llm = pipeline("text-generation", model="TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+    llm = pipeline("text-generation", model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", torch_dtype=torch.bfloat16, device=device)
     
     # Load TTS model manually from Hugging Face
-    tts_model = "parler-tts/parler-tts-mini-v1"
+    tts_model = ParlerTTSForConditionalGeneration.from_pretrained("parler-tts/parler-tts-mini-v1").to(device)
+    tokenizer = AutoTokenizer.from_pretrained("parler-tts/parler-tts-mini-v1")
     
-    return transcriber, llm, tts_model
+    return transcriber, llm, tts_model, tokenizer
 
 # Transcribe audio to text
 def transcribe_audio(transcriber, audio_path):
-    text = transcriber(audio_path)["text"]
-    return text
+    # Use WhisperProcessor to preprocess the audio
+    processor = WhisperProcessor.from_pretrained("openai/whisper-tiny.en")
+    
+    # Read the audio file
+    audio_input, _ = sf.read(audio_path)
+
+    # Process the audio input
+    audio_input = processor(audio_input, return_tensors="pt").input_features
+    audio_input = audio_input.to(transcriber.device)
+    
+    # Generate transcription
+    with torch.no_grad():
+        logits = transcriber.generate(input_ids=audio_input)
+    
+    transcription = processor.decode(logits[0], skip_special_tokens=True)
+    return transcription
 
 # Generate AI response
 def fetch_ai_response(llm, input_text):
@@ -29,20 +48,19 @@ def fetch_ai_response(llm, input_text):
     return response
 
 # Convert text to speech
-def text_to_audio(tts_model, text, audio_path):
-    # Download the TTS model file
-    model = hf_hub_download(repo_id=tts_model, filename="pytorch_model.bin")
-    tokenizer = hf_hub_download(repo_id=tts_model, filename="tokenizer.json")
-    
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model)
-    
+def text_to_audio(tts_model, tokenizer, text, audio_path):
     # Tokenize and generate speech
     inputs = tokenizer(text, return_tensors="pt")
-    outputs = model.generate(**inputs)
+    inputs = {k: v.to(tts_model.device) for k, v in inputs.items()}
     
-    audio_data = outputs[0].numpy()  # Convert model output to numpy array
-    sf.write(audio_path, audio_data, 16000)
+    with torch.no_grad():
+        outputs = tts_model.generate(**inputs)
+    
+    # Convert model output to numpy array
+    audio_data = outputs[0].cpu().numpy()
+    
+    # Save audio data to file
+    sf.write(audio_path, audio_data, 22050)  # Make sure sample rate matches your model's requirements
 
 # Main application
 def main():
@@ -50,7 +68,7 @@ def main():
     st.title("Hi! How can I assist you today?")
 
     # Load models
-    transcriber, llm, tts_model = setup_models()
+    transcriber, llm, tts_model, tokenizer = setup_models()
     
     # Record audio from user
     recorded_audio = audio_recorder()
@@ -70,7 +88,7 @@ def main():
 
         # Convert the AI response to audio
         response_audio_file = "audio_response.wav"
-        text_to_audio(tts_model, ai_response, response_audio_file)
+        text_to_audio(tts_model, tokenizer, ai_response, response_audio_file)
         st.audio(response_audio_file)
 
 if __name__ == "__main__":
