@@ -9,3 +9,4 @@ streamlit
 accelerate 
 torchaudio
 localtunnel
+base64
