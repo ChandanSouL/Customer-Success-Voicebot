@@ -26,7 +26,7 @@ def setup_models():
         # Load TTS pipeline and ensure it runs on GPU
         tts_pipeline = pipeline("text-to-speech", model=tts_model_name, device=0 if torch.cuda.is_available() else -1)
     except Exception as e:
-        st.write(f"Warning: Could not load TTS pipeline. Error: {e}")
+        #st.write(f"Warning: Could not load TTS pipeline. Error: {e}")
         tts_pipeline = None
 
     return transcriber, llm, tts_model, tokenizer, device, tts_pipeline
@@ -45,7 +45,7 @@ def fetch_ai_response(llm, input_text):
     try:
         response = llm(
             input_text, 
-            max_length=150,  # Increased max length for more detailed responses
+            max_length=50,  # Increased max length for more detailed responses
             do_sample=True, 
             top_p=0.85  # Adjusting top_p for more control over randomness
         )[0]["generated_text"]
@@ -63,8 +63,8 @@ def text_to_audio(text, description, audio_path, tts_model, tokenizer, device, t
             sample_rate = tts_output['sampling_rate']
             
             # Debugging information
-            st.write(f"Generated audio length: {len(audio_arr) / sample_rate:.2f} seconds")
-            st.write(f"Sample rate: {sample_rate}")
+            #st.write(f"Generated audio length: {len(audio_arr) / sample_rate:.2f} seconds")
+            #st.write(f"Sample rate: {sample_rate}")
         else:
             input_ids = tokenizer(description, return_tensors="pt").input_ids.to(device)
             prompt_input_ids = tokenizer(text, return_tensors="pt").input_ids.to(device)
@@ -92,7 +92,7 @@ def text_to_audio(text, description, audio_path, tts_model, tokenizer, device, t
             return
         
         # Save audio file
-        sf.write(audio_path, audio_arr, sample_rate)
+        sf.write(audio_path, audio_arr, tts_model.config.sampling_rate)
         #st.write(f"Audio saved to: {audio_path}")
 
         # Provide a download link for the audio file
