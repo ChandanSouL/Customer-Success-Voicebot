@@ -22,7 +22,7 @@ Steps to Configure and Run
 
 **Run Streamlit to Run your app on localtunnel use the IP from the above and login**
 
-```!streamlit run /content/Customer-Success-Voicebot/maintest.py & npx localtunnel --port 8501```
+```!streamlit run /content/Customer-Success-Voicebot/mainapp.py & npx localtunnel --port 8501```
 
 **Specific Libraries <Debug>**
 
