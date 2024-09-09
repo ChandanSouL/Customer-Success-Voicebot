@@ -17,13 +17,13 @@ def setup_models():
     # Load TinyLlama for text generation
     llm = pipeline("text-generation", model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", device=0 if torch.cuda.is_available() else -1)
     
-    # Load TTS model manually
+    # Load TTS model manually for Text-to-speech
     tts_model_name = "parler-tts/parler-tts-mini-v1"
     tts_model = ParlerTTSForConditionalGeneration.from_pretrained(tts_model_name).to(device)
     tokenizer = AutoTokenizer.from_pretrained(tts_model_name)
     
     try:
-        # Load TTS pipeline
+        # Load TTS pipeline for text-to-speech
         tts_pipeline = pipeline("text-to-speech", model=tts_model_name, device=0 if torch.cuda.is_available() else -1)
     except Exception:
         tts_pipeline = None
@@ -38,7 +38,7 @@ def transcribe_audio(transcriber, audio_path):
         st.error(f"Error transcribing audio: {e}")
         return None
 
-# Generate AI response
+# Generate Tinlyllama-1.1B-Chat-v1.0 response (text-to-text)
 def fetch_ai_response(llm, input_text):
     try:
         response = llm(input_text, max_length=50, do_sample=True, top_p=0.85)[0]["generated_text"]
@@ -77,7 +77,7 @@ def text_to_audio(text, description, audio_path, tts_model, tokenizer, device, t
     except Exception as e:
         st.error(f"Error converting text to audio: {e}")
 
-# Display AI response in a styled card
+# Display generated text response in a styled card
 def display_ai_response(response_text):
     st.markdown(
         f"""
