@@ -24,6 +24,8 @@
 
 ```!streamlit run /content/Customer-Success-Voicebot/mainapp.py & npx localtunnel --port 8501```
 
+You will get an external link from the above command open it in a new tab and use the Public Ip from the above command to login into the Localtunnel website to view streamlit Application.
+
 **Specific Libraries <Debug>**
 
 **Protobuf Required Library**
@@ -33,3 +35,5 @@
 **Base64 import error**
 
 ```!pip install base64```
+
+
