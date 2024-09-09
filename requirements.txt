@@ -1,12 +1,9 @@
-torch
-whisper
+torch==2.4.0
 sounddevice
 scipy
 soundfile
 numpy
-audio_resorder_streamlit
-streamlit
-accelerate 
+audio_recorder_streamlit
+streamlit==1.38.0
 torchaudio
-localtunnel
-base64
+protobuf==3.20.*

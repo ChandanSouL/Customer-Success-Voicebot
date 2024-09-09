@@ -1,4 +1,4 @@
-Steps to Configure and Run
+**Steps to Configure and Run**
 
 **Clone this project in your Google collab notebook/ Kaggale Notebook**
 
@@ -22,9 +22,14 @@ Steps to Configure and Run
 
 **Run Streamlit to Run your app on localtunnel use the IP from the above and login**
 
-```!streamlit run /content/Customer-Success-Voicebot/maintest.py & npx localtunnel --port 8501```
+```!streamlit run /content/Customer-Success-Voicebot/mainapp.py & npx localtunnel --port 8501```
 
 **Specific Libraries <Debug>**
 
-Protobuf Error
+**Protobuf Required Library**
+
 ```!pip install protobuf==3.20.*```
+
+**Base64 import error**
+
+```!pip install base64```
