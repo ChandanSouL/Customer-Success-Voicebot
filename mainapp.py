@@ -11,10 +11,10 @@ import base64
 def setup_models():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     
-    # Load Whisper model for speech-to-text (ensuring it runs on GPU)
+    # Load Whisper model for speech-to-text
     transcriber = pipeline("automatic-speech-recognition", model="openai/whisper-tiny.en", device=0 if torch.cuda.is_available() else -1)
     
-    # Load TinyLlama for text generation (ensuring it runs on GPU)
+    # Load TinyLlama for text generation
     llm = pipeline("text-generation", model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", device=0 if torch.cuda.is_available() else -1)
     
     # Load TTS model manually
@@ -23,10 +23,9 @@ def setup_models():
     tokenizer = AutoTokenizer.from_pretrained(tts_model_name)
     
     try:
-        # Load TTS pipeline and ensure it runs on GPU
+        # Load TTS pipeline
         tts_pipeline = pipeline("text-to-speech", model=tts_model_name, device=0 if torch.cuda.is_available() else -1)
-    except Exception as e:
-        #st.write(f"Warning: Could not load TTS pipeline. Error: {e}")
+    except Exception:
         tts_pipeline = None
 
     return transcriber, llm, tts_model, tokenizer, device, tts_pipeline
@@ -34,8 +33,7 @@ def setup_models():
 # Transcribe audio to text
 def transcribe_audio(transcriber, audio_path):
     try:
-        text = transcriber(audio_path)["text"]
-        return text
+        return transcriber(audio_path)["text"]
     except Exception as e:
         st.error(f"Error transcribing audio: {e}")
         return None
@@ -43,12 +41,7 @@ def transcribe_audio(transcriber, audio_path):
 # Generate AI response
 def fetch_ai_response(llm, input_text):
     try:
-        response = llm(
-            input_text, 
-            max_length=50,  # Increased max length for more detailed responses
-            do_sample=True, 
-            top_p=0.85  # Adjusting top_p for more control over randomness
-        )[0]["generated_text"]
+        response = llm(input_text, max_length=50, do_sample=True, top_p=0.85)[0]["generated_text"]
         return response
     except Exception as e:
         st.error(f"Error generating AI response: {e}")
@@ -61,44 +54,26 @@ def text_to_audio(text, description, audio_path, tts_model, tokenizer, device, t
             tts_output = tts_pipeline(text)
             audio_arr = np.array(tts_output['audio']).astype(np.float32)
             sample_rate = tts_output['sampling_rate']
-            
-            # Debugging information
-            #st.write(f"Generated audio length: {len(audio_arr) / sample_rate:.2f} seconds")
-            #st.write(f"Sample rate: {sample_rate}")
         else:
             input_ids = tokenizer(description, return_tensors="pt").input_ids.to(device)
             prompt_input_ids = tokenizer(text, return_tensors="pt").input_ids.to(device)
-            
             with torch.no_grad():
                 output = tts_model.generate(
                     input_ids=input_ids,
                     prompt_input_ids=prompt_input_ids,
-                    max_length=512,
+                    max_length=1024,
                     do_sample=True,
                     top_p=0.95
                 )
-                
-            # Convert generated tokens to audio
             audio_arr = output.cpu().numpy().squeeze()
-            sample_rate = 22050  # Default TTS sample rate
-            
-            # Debugging information
-            #st.write(f"Generated audio length: {len(audio_arr) / sample_rate:.2f} seconds")
-            #st.write(f"Sample rate: {sample_rate}")
-
-        # Ensure audio array is not empty
+            sample_rate = 22050
+        
         if len(audio_arr) == 0:
             st.error("Generated audio is empty.")
             return
         
-        # Save audio file
         sf.write(audio_path, audio_arr, tts_model.config.sampling_rate)
-        #st.write(f"Audio saved to: {audio_path}")
-
-        # Provide a download link for the audio file
-        #st.audio(audio_path)
-        #st.download_button(label="Download Audio", data=open(audio_path, "rb"), file_name="response_audio.wav")
-
+        
     except Exception as e:
         st.error(f"Error converting text to audio: {e}")
 
@@ -106,22 +81,9 @@ def text_to_audio(text, description, audio_path, tts_model, tokenizer, device, t
 def display_ai_response(response_text):
     st.markdown(
         f"""
-        <div style="
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        ">
-            <h4 style="
-                margin-top: 0;
-                color: #333;
-            ">AI Response:</h4>
-            <p style="
-                margin: 0;
-                color: #555;
-            ">{response_text}</p>
+        <div style="padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h4 style="margin-top: 0; color: #333;">AI Response:</h4>
+            <p style="margin: 0; color: #555;">{response_text}</p>
         </div>
         """,
         unsafe_allow_html=True

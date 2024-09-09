@@ -1,4 +1,4 @@
-Steps to Configure and Run
+**Steps to Configure and Run**
 
 **Clone this project in your Google collab notebook/ Kaggale Notebook**
 
@@ -26,5 +26,10 @@ Steps to Configure and Run
 
 **Specific Libraries <Debug>**
 
-Protobuf Error
+**Protobuf Required Library**
+
 ```!pip install protobuf==3.20.*```
+
+**Base64 import error**
+
+```!pip install base64```
