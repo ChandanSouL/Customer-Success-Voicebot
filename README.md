@@ -1,5 +1,9 @@
 **Steps to Configure and Run**
 
+Open Google Colab/ Kaggale Notebook
+1. Select Nvidia-T4 GPU
+2. Go to Notebook settings and select T4 as Hardware Accelator
+
 **Clone this project in your Google collab notebook/ Kaggale Notebook**
 
 ```git clone https://github.com/ChandanSouL/Customer-Success-Voicebot.git```
