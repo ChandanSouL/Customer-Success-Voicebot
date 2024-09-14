@@ -53,7 +53,7 @@ def text_to_audio(text, description, audio_path, tts_model, tokenizer, device, t
         if tts_pipeline:
             tts_output = tts_pipeline(text)
             audio_arr = np.array(tts_output['audio']).astype(np.float32)
-            sample_rate = tts_output['sampling_rate']
+            #sample_rate = tts_output['sampling_rate']
         else:
             input_ids = tokenizer(description, return_tensors="pt").input_ids.to(device)
             prompt_input_ids = tokenizer(text, return_tensors="pt").input_ids.to(device)
@@ -66,7 +66,7 @@ def text_to_audio(text, description, audio_path, tts_model, tokenizer, device, t
                     top_p=0.95
                 )
             audio_arr = output.cpu().numpy().squeeze()
-            sample_rate = 22050
+            #sample_rate = 22050
         
         if len(audio_arr) == 0:
             st.error("Generated audio is empty.")
